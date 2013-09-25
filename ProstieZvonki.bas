@@ -4,11 +4,9 @@ Option Explicit
 
 Public prostie_zvonki_wrapper As ProstieZvonkiWrapper
 
-Public Const Phone = "123" 'current user phone number
-
-Public Function Init_Prostie_Zvonki()
+Public Function Init_Prostie_Zvonki(managerPhone As String)
     Set prostie_zvonki_wrapper = New ProstieZvonkiWrapper
-    Call prostie_zvonki_wrapper.Initialize(Phone)
+    Call prostie_zvonki_wrapper.Initialize(managerPhone)
 End Function
 
 Public Function MakeCall(Phone As String)
