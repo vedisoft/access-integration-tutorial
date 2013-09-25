@@ -4,9 +4,9 @@ Option Explicit
 
 Public prostie_zvonki_wrapper As ProstieZvonkiWrapper
 
-Public Function Init_Prostie_Zvonki(managerPhone As String)
+Public Function Init_Prostie_Zvonki(ManagerPhone As String)
     Set prostie_zvonki_wrapper = New ProstieZvonkiWrapper
-    Call prostie_zvonki_wrapper.Initialize(managerPhone)
+    Call prostie_zvonki_wrapper.Initialize(ManagerPhone)
 End Function
 
 Public Function MakeCall(Phone As String)

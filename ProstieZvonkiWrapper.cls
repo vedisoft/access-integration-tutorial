@@ -14,13 +14,19 @@ Attribute prostie_zvonki_lib.VB_VarHelpID = -1
 
 Const guidKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\GUID"
 
-Dim clientID As String
+Dim ManagerPhone As String
 
-Public Function Initialize(client_id As String)
+Dim password As String
+
+
+Public Function Initialize(manager_phone As String)
     Dim guid As String
     Dim logPath As String
     
-    clientID = client_id
+    'should be loaded provided client password
+    password = "123"
+    
+    ManagerPhone = manager_phone
     
     'add unique client guid to registry
     If (RegKeyExists(guidKey)) Then
@@ -38,7 +44,7 @@ Public Function Initialize(client_id As String)
     Set prostie_zvonki_lib = New CTIControlX
     
     On Error GoTo Errhandler
-    Call prostie_zvonki_lib.Connect("127.0.0.1:10150", clientID, "Access", guid, _
+    Call prostie_zvonki_lib.Connect("127.0.0.1:10150", password, "Access", guid, _
                                             logPath & "ProtocolLib_log.log", 2, 5000)
     Exit Function
 Errhandler:
@@ -52,7 +58,7 @@ Public Sub Class_Terminate()
 End Sub
 
 Public Sub MakeCall(Phone As String)
-    Call prostie_zvonki_lib.Call(clientID, Phone)
+    Call prostie_zvonki_lib.Call(ManagerPhone, Phone)
 End Sub
 
 Function GenGuid() As String
@@ -95,12 +101,13 @@ End Sub
 
 Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As Long, _
                                                 ByVal src As String, ByVal dst As String)
-    If (dst <> clientID) Then
-        End Sub
+    If (dst <> ManagerPhone) Then
+        Exit Sub
+    End If
     Dim rs As Recordset
     Dim strSQL As String
     strSQL = "SELECT [Имя], [Фамилия] FROM Контакты" & _
-            "WHERE Контакты.[Рабочий телефон] = '" & src & "'"
+            " WHERE Контакты.[Рабочий телефон] = '" & src & "'"
     Set rs = CurrentDb.OpenRecordset(strSQL)
     If rs.RecordCount >= 1 Then
         'show client name
