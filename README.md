@@ -174,10 +174,13 @@ End Sub
 Полный текст модуля находится в репозитории в файле [**ProstieZvonki.bas**](https://github.com/vedisoft/access-integration-tutorial/raw/master/ProstieZvonki.bas)
 
 ```vb
+Option Explicit
+
 Public prostie_zvonki_wrapper As ProstieZvonkiWrapper
 
-Public Function Init()
+Public Function Init_Prostie_Zvonki(ManagerPhone As String)
     Set prostie_zvonki_wrapper = New ProstieZvonkiWrapper
+    Call prostie_zvonki_wrapper.Initialize(ManagerPhone)
 End Function
 
 Public Function MakeCall(Phone As String)
