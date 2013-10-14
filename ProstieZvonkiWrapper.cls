@@ -13,43 +13,113 @@ Public WithEvents prostie_zvonki_lib As CTIControlX
 Attribute prostie_zvonki_lib.VB_VarHelpID = -1
 
 Const guidKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\GUID"
+Const serverKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\ServerAddress"
+Const passwordKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\ClientID"
+Const phoneKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\Phone"
 
+Public State As Boolean
+
+Dim logPath As String
 Dim ManagerPhone As String
-
+Dim server As String
 Dim password As String
+Dim GUID As String
 
-
-Public Function Initialize(manager_phone As String)
-    Dim guid As String
-    Dim logPath As String
-    
-    'should be loaded provided client password
-    password = "123"
-    
-    ManagerPhone = manager_phone
-    
+Public Sub LoadSettings()
     'add unique client guid to registry
     If (RegKeyExists(guidKey)) Then
-        guid = RegKeyRead(guidKey)
+        GUID = RegKeyRead(guidKey)
     Else
-        guid = GenGuid()
-        Call RegKeySave(guidKey, guid)
+        GUID = GenGuid()
+        Call RegKeySave(guidKey, GUID)
     End If
     
+    If (RegKeyExists(serverKey)) Then
+        server = RegKeyRead(serverKey)
+    Else
+        server = "127.0.0.1:10150"
+    End If
+    
+    If (RegKeyExists(passwordKey)) Then
+        password = RegKeyRead(passwordKey)
+    End If
+    
+    If (RegKeyExists(phoneKey)) Then
+        ManagerPhone = RegKeyRead(phoneKey)
+    End If
+End Sub
+
+Public Sub SaveSettings()
+    Call RegKeySave(phoneKey, ManagerPhone)
+    Call RegKeySave(serverKey, server)
+    Call RegKeySave(passwordKey, password)
+End Sub
+
+Public Function SetConnectionSettings(server_string As String, password_string As String)
+    server = server_string
+    password = password_string
+    SaveSettings
+End Function
+
+Public Sub SetManagerPhone(phone As String)
+    ManagerPhone = phone
+    SaveSettings
+End Sub
+
+Public Function GetServer()
+    GetServer = server
+End Function
+
+Public Function GetPassword()
+    GetPassword = password
+End Function
+
+Public Function GetManagerPhone()
+    GetManagerPhone = ManagerPhone
+End Function
+
+Public Sub Class_Initialize()
     'create log directory
     logPath = Environ("LocalAppData") & "\Ведисофт\Access\"
     If Dir(logPath) = "" Then
         MkDir logPath
     End If
-    Set prostie_zvonki_lib = New CTIControlX
     
+    LoadSettings
+    
+    Set prostie_zvonki_lib = New CTIControlX
+End Sub
+
+Public Sub Connect()
+    If (State) Then
+        prostie_zvonki_lib.Disconnect
+        State = False
+    End If
+
+    Dim ret As Integer
     On Error GoTo Errhandler
-    Call prostie_zvonki_lib.Connect("127.0.0.1:10150", password, "Access", guid, _
+    ret = prostie_zvonki_lib.Connect(server, password, "Access", GUID, _
                                             logPath & "ProtocolLib_log.log", 2, 5000)
-    Exit Function
+    If (ret = 0) Then
+        State = True
+    Else
+        State = False
+        GoTo Errhandler
+    End If
+    Exit Sub
 Errhandler:
     MsgBox ("Can't connect to server")
+End Sub
+
+Public Function GetConnectionState()
+    GetConnectionState = (prostie_zvonki_lib.connectionState = 1)
+    
 End Function
+
+Public Sub Disconnect()
+    Call prostie_zvonki_lib.Disconnect
+    State = False
+End Sub
 
 Public Sub Class_Terminate()
     If Not IsNull(prostie_zvonki_lib) Then
@@ -57,19 +127,19 @@ Public Sub Class_Terminate()
     End If
 End Sub
 
-Public Sub MakeCall(Phone As String)
-    Call prostie_zvonki_lib.Call(ManagerPhone, Phone)
+Public Sub MakeCall(phone As String)
+    Call prostie_zvonki_lib.Call(ManagerPhone, phone)
 End Sub
 
 Function GenGuid() As String
     Dim TypeLib As Object
-    Dim guid As String
+    Dim GUID As String
     Set TypeLib = CreateObject("Scriptlet.TypeLib")
-    guid = TypeLib.guid
+    GUID = TypeLib.GUID
     ' format is {24DD18D4-C902-497F-A64B-28B2FA741661}
-    guid = Replace(guid, "{", "")
-    guid = Replace(guid, "}", "")
-    GenGuid = guid
+    GUID = Replace(GUID, "{", "")
+    GUID = Replace(GUID, "}", "")
+    GenGuid = GUID
 End Function
 
 
@@ -136,3 +206,16 @@ Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As Long, ByVal fro
     Call rs.Close
 End Sub
 
+Private Sub prostie_zvonki_lib_OnConnectionState(ByVal con_state As Long)
+    Select Case con_state
+        Case 1
+            State = True
+        Case Else
+            State = False
+    End Select
+    On Error GoTo ErrorHandler
+    If (Not (Forms("Настройки") Is Nothing)) Then
+        Forms("Настройки").UpdateState (State)
+    End If
+ErrorHandler:
+End Sub
