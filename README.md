@@ -54,43 +54,51 @@ Option Explicit
 Public WithEvents prostie_zvonki_lib As CTIControlX
 
 Const guidKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\GUID"
+Const serverKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\ServerAddress"
+Const passwordKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\ClientID"
+Const phoneKey = "HKEY_CURRENT_USER\Software\Vedisoft\Access\Phone"
 
+Public State As Boolean
+
+Dim logPath As String
 Dim ManagerPhone As String
-
+Dim server As String
 Dim password As String
+Dim GUID As String
 
-
-Public Function Initialize(manager_phone As String)
-    Dim guid As String
-    Dim logPath As String
-    
-    'should be loaded provided client password
-    password = "123"
-    
-    ManagerPhone = manager_phone
-    
-    'add unique client guid to registry
-    If (RegKeyExists(guidKey)) Then
-        guid = RegKeyRead(guidKey)
-    Else
-        guid = GenGuid()
-        Call RegKeySave(guidKey, guid)
-    End If
-    
+Public Sub Class_Initialize()
     'create log directory
     logPath = Environ("LocalAppData") & "\Ведисофт\Access\"
-    If Dir(logPath) = "" Then
+    If Not FolderExists(logPath) Then
         MkDir logPath
     End If
-    Set prostie_zvonki_lib = New CTIControlX
     
+    LoadSettings
+    
+    Set prostie_zvonki_lib = New CTIControlX
+End Sub
+
+Public Sub Connect()
+    If (State) Then
+        prostie_zvonki_lib.Disconnect
+        State = False
+    End If
+
+    Dim ret As Integer
     On Error GoTo Errhandler
-    Call prostie_zvonki_lib.Connect("127.0.0.1:10150", password, "Access", guid, _
-                                            logPath & "ProtocolLib_log.log", 2, 5000)
-    Exit Function
+    prostie_zvonki_lib.phoneNumber = ManagerPhone
+    ret = prostie_zvonki_lib.Connect(server, password, "Access", GUID, _
+                                            logPath & "ProtocolLib_log.log", 0, 5000)
+    If (ret = 0) Then
+        State = True
+    Else
+        State = False
+        GoTo Errhandler
+    End If
+    Exit Sub
 Errhandler:
     MsgBox ("Can't connect to server")
-End Function
+End Sub
 ```
 
 А также метод для совершения исходящего вызова, который будем использовать при нажатии на кнопку на форме:
@@ -110,7 +118,7 @@ End Sub
 Имя будем искать по номеру телефона (колонка Рабочий телефон) в таблице Контакты.
 
 ```vb
-Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As Long, _
+Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
                                                 ByVal src As String, ByVal dst As String)
     If (dst <> ManagerPhone) Then
         Exit Sub
@@ -138,7 +146,7 @@ End Sub
 -----------------------------------------------------------------------------------------------------
 
 ```vb
-Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As Long, ByVal from As String)
+Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String)
     Dim rs As Recordset
     Dim strSQL As String
     strSQL = "SELECT Менеджеры.[Телефон] FROM Менеджеры" & _
@@ -174,17 +182,24 @@ End Sub
 Полный текст модуля находится в репозитории в файле [**ProstieZvonki.bas**](https://github.com/vedisoft/access-integration-tutorial/raw/master/ProstieZvonki.bas)
 
 ```vb
+Option Compare Database
 Option Explicit
 
 Public prostie_zvonki_wrapper As ProstieZvonkiWrapper
 
-Public Function Init_Prostie_Zvonki(ManagerPhone As String)
+Public Sub CreateWrapper()
     Set prostie_zvonki_wrapper = New ProstieZvonkiWrapper
-    Call prostie_zvonki_wrapper.Initialize(ManagerPhone)
+End Sub
+
+Public Function Init_Prostie_Zvonki(ManagerPhone As String)
+    If (prostie_zvonki_wrapper Is Nothing) Then
+        CreateWrapper
+    End If
+    prostie_zvonki_wrapper.SetManagerPhone (ManagerPhone)
 End Function
 
-Public Function MakeCall(Phone As String)
-    Call prostie_zvonki_wrapper.MakeCall(Phone)
+Public Function MakeCall(phone As String)
+    Call prostie_zvonki_wrapper.MakeCall(phone)
 End Function
 ```
 
@@ -275,7 +290,7 @@ Call Event: from = 123, to = 73430112233
 
 Шаг 10. Настройки
 -----------------
-Добавим экран настроек, который будет обладать следующей фцнкциональностью:
+Добавим экран настроек, который будет обладать следующей функциональностью:
 
 - поле для ввода ip адреса и пароля, который далее передаётся для инициализации
 - статус подключения (свойство ActiveX ConnectionState)

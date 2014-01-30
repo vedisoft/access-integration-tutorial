@@ -64,6 +64,8 @@ End Function
 Public Sub SetManagerPhone(phone As String)
     ManagerPhone = phone
     SaveSettings
+    Disconnect
+    Connect
 End Sub
 
 Public Function GetServer()
@@ -81,7 +83,7 @@ End Function
 Public Sub Class_Initialize()
     'create log directory
     logPath = Environ("LocalAppData") & "\Ведисофт\Access\"
-    If Dir(logPath) = "" Then
+    If Not FolderExists(logPath) Then
         MkDir logPath
     End If
     
@@ -89,6 +91,11 @@ Public Sub Class_Initialize()
     
     Set prostie_zvonki_lib = New CTIControlX
 End Sub
+
+Function FolderExists(ByVal strPath As String) As Boolean
+    On Error Resume Next
+    FolderExists = ((GetAttr(strPath) And vbDirectory) = vbDirectory)
+End Function
 
 Public Sub Connect()
     If (State) Then
@@ -98,8 +105,9 @@ Public Sub Connect()
 
     Dim ret As Integer
     On Error GoTo Errhandler
+    prostie_zvonki_lib.phoneNumber = ManagerPhone
     ret = prostie_zvonki_lib.Connect(server, password, "Access", GUID, _
-                                            logPath & "ProtocolLib_log.log", 2, 5000)
+                                            logPath & "ProtocolLib_log.log", 0, 5000)
     If (ret = 0) Then
         State = True
     Else
@@ -169,7 +177,7 @@ Sub RegKeySave(i_RegKey As String, _
     myWS.RegWrite i_RegKey, i_Value, i_Type
 End Sub
 
-Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As Long, _
+Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
                                                 ByVal src As String, ByVal dst As String)
     If (dst <> ManagerPhone) Then
         Exit Sub
@@ -189,7 +197,7 @@ Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As Long, _
     Call rs.Close
 End Sub
 
-Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As Long, ByVal from As String)
+Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String)
     Dim rs As Recordset
     Dim strSQL As String
     strSQL = "SELECT Менеджеры.[Телефон] FROM Менеджеры" & _

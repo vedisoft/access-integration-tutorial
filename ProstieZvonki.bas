@@ -13,7 +13,6 @@ Public Function Init_Prostie_Zvonki(ManagerPhone As String)
         CreateWrapper
     End If
     prostie_zvonki_wrapper.SetManagerPhone (ManagerPhone)
-    prostie_zvonki_wrapper.Connect
 End Function
 
 Public Function MakeCall(phone As String)
