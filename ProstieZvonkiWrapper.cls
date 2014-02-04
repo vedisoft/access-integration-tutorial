@@ -100,9 +100,9 @@ End Sub
 
 Sub CreateLogDir()
     logPath = Environ("LocalAppData") & "\Ведисофт\Access\"
-    'If Not FolderExists(logPath) Then
+    If Not FolderExists(logPath) Then
         MkDir logPath
-    'End If
+    End If
     Exit Sub
 End Sub
 
