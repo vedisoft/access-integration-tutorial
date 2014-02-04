@@ -67,15 +67,16 @@ Dim password As String
 Dim GUID As String
 
 Public Sub Class_Initialize()
-    'create log directory
-    logPath = Environ("LocalAppData") & "\Ведисофт\Access\"
-    If Not FolderExists(logPath) Then
-        MkDir logPath
-    End If
+    On Error GoTo ErrorHandler
+    CreateLogDir
     
     LoadSettings
     
     Set prostie_zvonki_lib = New CTIControlX
+    Exit Sub
+ErrorHandler:
+    ShowError Err
+    Resume Next
 End Sub
 
 Public Sub Connect()
@@ -120,9 +121,11 @@ End Sub
 ```vb
 Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
                                                 ByVal src As String, ByVal dst As String)
+    On Error GoTo ErrorHandler
+    
     If (dst <> ManagerPhone) Then
         Exit Sub
-	End IF
+    End If
     Dim rs As Recordset
     Dim strSQL As String
     strSQL = "SELECT [Имя], [Фамилия] FROM Контакты" & _
@@ -136,6 +139,10 @@ Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
         MsgBox ("Incoming call from " & src)
     End If
     Call rs.Close
+    Exit Sub
+ErrorHandler:
+    ShowError Err
+    Resume Next
 End Sub
 ```
 
@@ -147,6 +154,7 @@ End Sub
 
 ```vb
 Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String)
+    On Error GoTo ErrorHandler
     Dim rs As Recordset
     Dim strSQL As String
     strSQL = "SELECT Менеджеры.[Телефон] FROM Менеджеры" & _
@@ -161,6 +169,10 @@ Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal f
         Call prostie_zvonki_lib.Transfer(CallID, "")
     End If
     Call rs.Close
+    Exit Sub
+ErrorHandler:
+    ShowError Err
+    Resume Next
 End Sub
 ```
 
