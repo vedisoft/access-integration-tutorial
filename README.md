@@ -43,7 +43,7 @@
 Шаг 2. Создадим VB класс для взаимодействия с ActiveX
 ------------------------------------------------------
 
-Полный текст модуля, включающий обработку событий, находится в репозитории в файле [**ProstieZvonkiWrapper.cls**](https://github.com/vedisoft/access-integration-tutorial/raw/master/ProstieZvonkiWrapper.cls)
+Полный текст модуля, включающий обработку событий и загрузку настроек находится в репозитории в файле [**ProstieZvonkiWrapper.cls**](https://github.com/vedisoft/access-integration-tutorial/raw/master/ProstieZvonkiWrapper.cls)
 
 
 Добавим метод для инициализации библиотеки и подключения:
@@ -94,11 +94,12 @@ Public Sub Connect()
         State = True
     Else
         State = False
-        GoTo Errhandler
+        MsgBox ("Can't connect to server")
     End If
     Exit Sub
 Errhandler:
-    MsgBox ("Can't connect to server")
+    ShowError Err
+    Resume Next
 End Sub
 ```
 
