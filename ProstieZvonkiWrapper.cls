@@ -1,4 +1,4 @@
-п»їVERSION 1.0 CLASS
+VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -214,32 +214,42 @@ Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
     If (dst <> ManagerPhone) Then
         Exit Sub
     End If
-    Dim rs As Recordset
-    Dim strSQL As String
-    strSQL = "SELECT [РРјСЏ], [Р¤Р°РјРёР»РёСЏ] FROM РљРѕРЅС‚Р°РєС‚С‹" & _
-            " WHERE РљРѕРЅС‚Р°РєС‚С‹.[Р Р°Р±РѕС‡РёР№ С‚РµР»РµС„РѕРЅ] = '" & src & "'"
-    Set rs = CurrentDb.OpenRecordset(strSQL)
-    If rs.RecordCount >= 1 Then
-        'show client name
-        MsgBox ("Incoming call from " & rs.Fields(0).Value & " " & rs.Fields(1).Value)
-    Else
+    Dim clientName As String
+    clientName = FindClientByPhone(src)
+    If clientName = "" Then
         'can't find client, show number only
         MsgBox ("Incoming call from " & src)
+    Else
+        'show client name
+        MsgBox ("Incoming call from " & clientName)
     End If
-    Call rs.Close
     Exit Sub
 ErrorHandler:
     ShowError Err
     Resume Next
 End Sub
 
+Private Function FindClientByPhone(phone As String) As String
+    Dim rs As Recordset
+    Dim strSQL As String
+    strSQL = "SELECT [Имя], [Фамилия] FROM Контакты" & _
+            " WHERE Контакты.[Рабочий телефон] = '" & phone & "'"
+    Set rs = CurrentDb.OpenRecordset(strSQL)
+    If rs.RecordCount >= 1 Then
+        FindClientByPhone = rs.Fields(0).Value & " " & rs.Fields(1).Value
+    Else
+        FindClientByPhone = ""
+    End If
+    Call rs.Close
+End Function
+
 Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String)
     On Error GoTo ErrorHandler
     Dim rs As Recordset
     Dim strSQL As String
-    strSQL = "SELECT РњРµРЅРµРґР¶РµСЂС‹.[РўРµР»РµС„РѕРЅ] FROM РњРµРЅРµРґР¶РµСЂС‹" & _
-            " INNER JOIN РљРѕРЅС‚Р°РєС‚С‹ ON РњРµРЅРµРґР¶РµСЂС‹.[РљРѕРґ] = РљРѕРЅС‚Р°РєС‚С‹.[РњРµРЅРµРґР¶РµСЂ]" & _
-            " WHERE РљРѕРЅС‚Р°РєС‚С‹.[Р Р°Р±РѕС‡РёР№ С‚РµР»РµС„РѕРЅ] = '" & from & "'"
+    strSQL = "SELECT Менеджеры.[Телефон] FROM Менеджеры" & _
+            " INNER JOIN Контакты ON Менеджеры.[Код] = Контакты.[Менеджер]" & _
+            " WHERE Контакты.[Рабочий телефон] = '" & from & "'"
     Set rs = CurrentDb.OpenRecordset(strSQL)
     If rs.RecordCount >= 1 Then
         'call with number, if manager can handle call
@@ -264,8 +274,8 @@ Private Sub prostie_zvonki_lib_OnConnectionState(ByVal con_state As Long)
             State = False
     End Select
     If (Forms.Count > 0) Then
-        If (Not (Forms("РќР°СЃС‚СЂРѕР№РєРё") Is Nothing)) Then
-            Forms("РќР°СЃС‚СЂРѕР№РєРё").UpdateState (State)
+        If (Not (Forms("Настройки") Is Nothing)) Then
+            Forms("Настройки").UpdateState (State)
         End If
     End If
     Exit Sub
@@ -273,3 +283,28 @@ ErrorHandler:
     ShowError Err
     Resume Next
 End Sub
+
+Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String)
+    On Error GoTo ErrorHandler
+    Dim manager As String, client As String
+    If (direction = 1) Then
+        client = dst
+        manager = src
+    Else
+        client = src
+        manager = dst
+    End If
+    startTimestampString = prostie_zvonki_lib.ConvertUtcToLocal(startTimestampString)
+    endTimestampString = prostie_zvonki_lib.ConvertUtcToLocal(endTimestampString)
+    Dim startTime, endTime
+    startTime = DateAdd("s", CLng(startTimestampString), DateSerial(1970, 1, 1))
+    endTime = DateAdd("s", CLng(endTimestampString), DateSerial(1970, 1, 1))
+    Dim clientName As String
+    clientName = FindClientByPhone(client)
+    MsgBox ("Звонок завершен" & Chr(13) & "Телефон менеджера: " & manager & Chr(13) & "Клиент: " & clientName & Chr(13) & "Клиент(телефон): " & client & Chr(13) & "Начало звонка: " & startTime & Chr(13) & "Конец звонка: " & endTime & Chr(13) & "Продолжительность: " & duration / 1000 & " секунд")
+    Exit Sub
+ErrorHandler:
+    ShowError Err
+    Resume Next
+End Sub
+

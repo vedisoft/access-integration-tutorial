@@ -1,4 +1,4 @@
-Пример интеграции MS Access с сервисом Простые Звонки
+﻿Пример интеграции MS Access с сервисом Простые Звонки
 ==========================================================
 
 Простые Звонки - сервис для интеграции клиентских приложений (Excel, 1C и ERP-cистем) с офисными и облачными АТС. Клиентское приложение может общаться с сервером Простых Звонков через единый API, независимо от типа используемой АТС. 
@@ -195,7 +195,44 @@ End Sub
 
 ![ОТветственный менеджер](https://github.com/vedisoft/access-integration-tutorial/raw/master/img/responsible_manager.png)
 
-Шаг 5. Создадим VB модуль для доступа к объекту класса и его методам
+Шаг 5. Добавим метод для обработки события OnCompletedCall, используемого для создания истории звонков
+
+'''vb
+Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String)
+    On Error GoTo ErrorHandler
+    Dim manager As String, client As String
+    If (direction = 1) Then
+        client = dst
+        manager = src
+    Else
+        client = src
+        manager = dst
+    End If
+    startTimestampString = prostie_zvonki_lib.ConvertUtcToLocal(startTimestampString)
+    endTimestampString = prostie_zvonki_lib.ConvertUtcToLocal(endTimestampString)
+    Dim startTime, endTime
+    startTime = DateAdd("s", CLng(startTimestampString), DateSerial(1970, 1, 1))
+    endTime = DateAdd("s", CLng(endTimestampString), DateSerial(1970, 1, 1))
+    Dim clientName As String
+    clientName = FindClientByPhone(client)
+    MsgBox ("Звонок завершен" & Chr(13) & "Телефон менеджера: " & manager & Chr(13) & "Клиент: " & clientName & Chr(13) & "Клиент(телефон): " & client & Chr(13) & "Начало звонка: " & startTime & Chr(13) & "Конец звонка: " & endTime & Chr(13) & "Продолжительность: " & duration / 1000 & " секунд")
+    Exit Sub
+ErrorHandler:
+    ShowError Err
+    Resume Next
+End Sub
+'''
+
+Здесь реализовано всплывающее окно по завершении разговора, но скорее всего ввы захотите сохранять историю в базу, чтобы иметь возможность посмотреть ее позднее.
+
+Чтобы проверить работу истории звонков, отправим запрос с помощью диагностической утилиты:
+
+	[events off]> generate history 123 45678 1394623140 1394623165 25377 out ""
+
+Появится всплывающее окно с информацией о звонке.
+Посмотреть синтаксис команды можно введя "hеlp generate history"
+
+Шаг 6. Создадим VB модуль для доступа к объекту класса и его методам
 ---------------------------------------------------
 
 Полный текст модуля находится в репозитории в файле [**ProstieZvonki.bas**](https://github.com/vedisoft/access-integration-tutorial/raw/master/ProstieZvonki.bas)
@@ -222,7 +259,7 @@ Public Function MakeCall(phone As String)
 End Function
 ```
 
-Шаг 8. Инициализация объекта взаимодействия с ActiveX
+Шаг 7. Инициализация объекта взаимодействия с ActiveX
 -----------------------------------------------------
 
 Для инициализации нам необходимо определить какой именно менеджер работает с базой данных.
@@ -239,7 +276,7 @@ End Function
 	New client connected: 24DD18D4-C902-497F-A64B-28B2FA741661
 
 
-Шаг 6. Добавим обработчик для гиперссылки номера телефона в списке клиентов через обработку события Click
+Шаг 8. Добавим обработчик для гиперссылки номера телефона в списке клиентов через обработку события Click
 -----------------------------------------------------------------------------------------------------------
 ![Ссылка](https://github.com/vedisoft/access-integration-tutorial/raw/master/img/hiperlink.png)
 
@@ -259,7 +296,7 @@ End Sub
 Call Event: from = 123, to = 73430112233
 ```
 
-Шаг 7. Добавим обработчик кнопки Позвонить на форме клиента через добавление макроса
+Шаг 9. Добавим обработчик кнопки Позвонить на форме клиента через добавление макроса
 ------------------------------------------------------------------------------------
 
 ![Кнопка позвонить](https://github.com/vedisoft/access-integration-tutorial/raw/master/img/call_button.png)
@@ -273,7 +310,7 @@ Call Event: from = 123, to = 73430112233
 	Call Event: from = 123, to = 73430112233
 
 
-Шаг 9. Всплывающая карточка
+Шаг 10. Всплывающая карточка
 ---------------------------
 
 Для проверки всплывающей карточки отправим запрос с помощью диагностической утилиты:
@@ -290,7 +327,7 @@ Call Event: from = 123, to = 73430112233
 
 Должна отобразиться всплывающая карточка с именем звонящего.
 
-Шаг 9. Умная переадресация
+Шаг 11. Умная переадресация
 --------------------------
 
 Необходимо выбрать ответственного менеджера на карточке клиента.
@@ -307,7 +344,7 @@ Call Event: from = 123, to = 73430112233
 
 Значит система верно определила, что мы являемся ответственным сотрудником и хотим обслужить вызов.
 
-Шаг 10. Настройки
+Шаг 12. Настройки
 -----------------
 Добавим экран настроек, который будет обладать следующей функциональностью:
 
@@ -319,9 +356,3 @@ Call Event: from = 123, to = 73430112233
 [**Form_Настройки.cls**](https://raw.github.com/vedisoft/access-integration-tutorial/master/Form_%D0%9D%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B8.cls)
 
 ![Окно настроек](https://github.com/vedisoft/access-integration-tutorial/raw/master/img/acc_settings.png)
-
-
-Шаг 11. История звонков
------------------------
-MS Access на текущий момент не поддерживает событие ActiveX OnCompletedCall, поэтому функционал истории звонков пока недоступен.
-Мы работаем над этим.
