@@ -196,8 +196,9 @@ End Sub
 ![ОТветственный менеджер](https://github.com/vedisoft/access-integration-tutorial/raw/master/img/responsible_manager.png)
 
 Шаг 5. Добавим метод для обработки события OnCompletedCall, используемого для создания истории звонков
+------------------------------------------------------------------------------------------------------
 
-'''vb
+```vb
 Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String)
     On Error GoTo ErrorHandler
     Dim manager As String, client As String
@@ -221,7 +222,7 @@ ErrorHandler:
     ShowError Err
     Resume Next
 End Sub
-'''
+```
 
 Здесь реализовано всплывающее окно по завершении разговора, но скорее всего ввы захотите сохранять историю в базу, чтобы иметь возможность посмотреть ее позднее.
 
@@ -230,6 +231,7 @@ End Sub
 	[events off]> generate history 123 45678 1394623140 1394623165 25377 out ""
 
 Появится всплывающее окно с информацией о звонке.
+
 Посмотреть синтаксис команды можно введя "hеlp generate history"
 
 Шаг 6. Создадим VB модуль для доступа к объекту класса и его методам
