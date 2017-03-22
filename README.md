@@ -22,7 +22,7 @@
 Шаг 0. Установка ActiveX
 --------------------------
 
-Необходимо скачать ActiveX по ссылке [отсюда](http://prostiezvonki.ru/installs/ProstieZvonki_ActiveX.exe)
+Необходимо скачать ActiveX по ссылке [отсюда](http://prostiezvonki.ru/installs/ProstieZvonki_ActiveX_2.0.exe)
 
 После установки необходимо подключить ActiveX в редакторе VB кода в Tools -> References :
 
