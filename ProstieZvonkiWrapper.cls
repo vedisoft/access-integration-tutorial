@@ -208,7 +208,7 @@ Sub RegKeySave(i_RegKey As String, _
 End Sub
 
 Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
-                                                ByVal src As String, ByVal dst As String)
+                                                ByVal src As String, ByVal dst As String,ByVal line As String)
     On Error GoTo ErrorHandler
     
     If (dst <> ManagerPhone) Then
@@ -232,8 +232,8 @@ End Sub
 Private Function FindClientByPhone(phone As String) As String
     Dim rs As Recordset
     Dim strSQL As String
-    strSQL = "SELECT [Имя], [Фамилия] FROM Контакты" & _
-            " WHERE Контакты.[Рабочий телефон] = '" & phone & "'"
+    strSQL = "SELECT [Г€Г¬Гї], [Г”Г Г¬ГЁГ«ГЁГї] FROM ГЉГ®Г­ГІГ ГЄГІГ»" & _
+            " WHERE ГЉГ®Г­ГІГ ГЄГІГ».[ГђГ ГЎГ®Г·ГЁГ© ГІГҐГ«ГҐГґГ®Г­] = '" & phone & "'"
     Set rs = CurrentDb.OpenRecordset(strSQL)
     If rs.RecordCount >= 1 Then
         FindClientByPhone = rs.Fields(0).Value & " " & rs.Fields(1).Value
@@ -243,13 +243,13 @@ Private Function FindClientByPhone(phone As String) As String
     Call rs.Close
 End Function
 
-Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String)
+Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String,ByVal line As String)
     On Error GoTo ErrorHandler
     Dim rs As Recordset
     Dim strSQL As String
-    strSQL = "SELECT Менеджеры.[Телефон] FROM Менеджеры" & _
-            " INNER JOIN Контакты ON Менеджеры.[Код] = Контакты.[Менеджер]" & _
-            " WHERE Контакты.[Рабочий телефон] = '" & from & "'"
+    strSQL = "SELECT ГЊГҐГ­ГҐГ¤Г¦ГҐГ°Г».[Г’ГҐГ«ГҐГґГ®Г­] FROM ГЊГҐГ­ГҐГ¤Г¦ГҐГ°Г»" & _
+            " INNER JOIN ГЉГ®Г­ГІГ ГЄГІГ» ON ГЊГҐГ­ГҐГ¤Г¦ГҐГ°Г».[ГЉГ®Г¤] = ГЉГ®Г­ГІГ ГЄГІГ».[ГЊГҐГ­ГҐГ¤Г¦ГҐГ°]" & _
+            " WHERE ГЉГ®Г­ГІГ ГЄГІГ».[ГђГ ГЎГ®Г·ГЁГ© ГІГҐГ«ГҐГґГ®Г­] = '" & from & "'"
     Set rs = CurrentDb.OpenRecordset(strSQL)
     If rs.RecordCount >= 1 Then
         'call with number, if manager can handle call
@@ -274,8 +274,8 @@ Private Sub prostie_zvonki_lib_OnConnectionState(ByVal con_state As Long)
             State = False
     End Select
     If (Forms.Count > 0) Then
-        If (Not (Forms("Настройки") Is Nothing)) Then
-            Forms("Настройки").UpdateState (State)
+        If (Not (Forms("ГЌГ Г±ГІГ°Г®Г©ГЄГЁ") Is Nothing)) Then
+            Forms("ГЌГ Г±ГІГ°Г®Г©ГЄГЁ").UpdateState (State)
         End If
     End If
     Exit Sub
@@ -284,7 +284,7 @@ ErrorHandler:
     Resume Next
 End Sub
 
-Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String)
+Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String,ByVal line As String)
     On Error GoTo ErrorHandler
     Dim manager As String, client As String
     If (direction = 1) Then
@@ -301,7 +301,7 @@ Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src
     endTime = DateAdd("s", CLng(endTimestampString), DateSerial(1970, 1, 1))
     Dim clientName As String
     clientName = FindClientByPhone(client)
-    MsgBox ("Звонок завершен" & Chr(13) & "Телефон менеджера: " & manager & Chr(13) & "Клиент: " & clientName & Chr(13) & "Клиент(телефон): " & client & Chr(13) & "Начало звонка: " & startTime & Chr(13) & "Конец звонка: " & endTime & Chr(13) & "Продолжительность: " & duration / 1000 & " секунд")
+    MsgBox ("Г‡ГўГ®Г­Г®ГЄ Г§Г ГўГҐГ°ГёГҐГ­" & Chr(13) & "Г’ГҐГ«ГҐГґГ®Г­ Г¬ГҐГ­ГҐГ¤Г¦ГҐГ°Г : " & manager & Chr(13) & "ГЉГ«ГЁГҐГ­ГІ: " & clientName & Chr(13) & "ГЉГ«ГЁГҐГ­ГІ(ГІГҐГ«ГҐГґГ®Г­): " & client & Chr(13) & "ГЌГ Г·Г Г«Г® Г§ГўГ®Г­ГЄГ : " & startTime & Chr(13) & "ГЉГ®Г­ГҐГ¶ Г§ГўГ®Г­ГЄГ : " & endTime & Chr(13) & "ГЏГ°Г®Г¤Г®Г«Г¦ГЁГІГҐГ«ГјГ­Г®Г±ГІГј: " & duration / 1000 & " Г±ГҐГЄГіГ­Г¤")
     Exit Sub
 ErrorHandler:
     ShowError Err
