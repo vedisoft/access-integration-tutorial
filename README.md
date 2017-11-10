@@ -127,7 +127,7 @@ End Sub
 
 ```vb
 Private Sub prostie_zvonki_lib_OnTransferredCall(ByVal CallID As String, _
-                                                ByVal src As String, ByVal dst As String, ByVal line As String, ByVal line As String)
+                                                ByVal src As String, ByVal dst As String, ByVal line As String)
     On Error GoTo ErrorHandler
     
     If (dst <> ManagerPhone) Then
@@ -160,7 +160,7 @@ End Sub
 -----------------------------------------------------------------------------------------------------
 
 ```vb
-Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String, ByVal line As String, ByVal line As String)
+Private Sub prostie_zvonki_lib_OnTransferRequest(ByVal CallID As String, ByVal from As String, ByVal line As String)
     On Error GoTo ErrorHandler
     Dim rs As Recordset
     Dim strSQL As String
@@ -199,7 +199,7 @@ End Sub
 ------------------------------------------------------------------------------------------------------
 
 ```vb
-Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String, ByVal line As String, ByVal line As String)
+Private Sub prostie_zvonki_lib_OnCompletedCall(ByVal CallID As String, ByVal src As String, ByVal dst As String, ByVal duration As Long, ByVal startTimestampString As String, ByVal endTimestampString As String, ByVal direction As Long, ByVal record As String, ByVal line As String)
     On Error GoTo ErrorHandler
     Dim manager As String, client As String
     If (direction = 1) Then
